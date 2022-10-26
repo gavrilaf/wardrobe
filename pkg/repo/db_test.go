@@ -26,23 +26,23 @@ func TestMain(m *testing.M) {
 
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		log.Panicf("Could not connect to docker: %s", err)
+		log.Panicf("could not connect to docker: %s", err)
 	}
 
 	kyivLocation, err = time.LoadLocation("Europe/Kiev") // server timezone
 	if err != nil {
-		log.Panicf("Could not load timezone: %s", err)
+		log.Panicf("could not load timezone: %s", err)
 	}
 
 	// pulls an image, creates a container based on it and runs it
 	resource, err := pool.Run("postgres", "15.0", []string{"POSTGRES_USER=postgres", "POSTGRES_PASSWORD=secret", "POSTGRES_DB=" + dbName})
 	if err != nil {
-		log.Panicf("Could not start resource: %s", err)
+		log.Panicf("could not start resource: %s", err)
 	}
 
 	defer func() {
 		if err = pool.Purge(resource); err != nil {
-			log.Printf("Could not purge resource: %s\n", err)
+			log.Printf("could not purge resource: %s\n", err)
 		}
 	}()
 
@@ -50,7 +50,11 @@ func TestMain(m *testing.M) {
 
 	db, err = repo.NewDB(ctx, connString, 2)
 	if err != nil {
-		log.Panicf("Could not connect to docker: %s", err)
+		log.Panicf("could not start database: %s", err)
+	}
+
+	if err = db.Migrate(ctx, "../../migration"); err != nil {
+		log.Panicf("migration failed: %s", err)
 	}
 
 	code := m.Run()

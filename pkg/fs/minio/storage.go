@@ -2,7 +2,7 @@ package minio
 
 import (
 	"context"
-	
+
 	"github.com/gavrilaf/wardrobe/pkg/fs"
 )
 

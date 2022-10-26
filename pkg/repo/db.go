@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/cenkalti/backoff"
+	"github.com/golang-migrate/migrate/v4"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/tracelog"
@@ -70,7 +73,7 @@ func NewDB(ctx context.Context, connString string, maxConn int32) (*DB, error) {
 		if err != nil {
 			log.WithError(log.FromContext(ctx), err).Info("failed to ping database")
 		}
-		
+
 		return err
 	}
 
@@ -89,6 +92,28 @@ func NewDB(ctx context.Context, connString string, maxConn int32) (*DB, error) {
 	})
 
 	return &DB{pool: pool, quit: quit}, nil
+}
+
+func (db *DB) Migrate(ctx context.Context, path string) error {
+	dir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	sourceURL := "file:///" + filepath.Join(dir, path)
+	log.FromContext(ctx).Infof("Looking for migration scripts in: %s\n", sourceURL)
+
+	connStr := db.pool.Config().ConnString()
+
+	m, err := migrate.New(sourceURL, connStr)
+	if err != nil {
+		return err
+	}
+
+	if err = m.Up(); err != migrate.ErrNoChange {
+		return err
+	}
+	return nil
 }
 
 func (db *DB) Ping() error {

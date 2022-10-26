@@ -47,7 +47,7 @@ func (h *handler) addObject(c echo.Context) error {
 func (h *handler) uploadContent(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	id, err := strconv.Atoi(c.Param("object_id"))
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return httpx.ParameterError("id", err)
 	}
@@ -67,7 +67,7 @@ func (h *handler) uploadContent(c echo.Context) error {
 		}
 	}()
 
-	err = h.manager.UploadContent(ctx, id, file)
+	err = h.manager.UploadContent(ctx, id, file, fileHeader.Size)
 	if err != nil {
 		return httpx.LogicError(err)
 	}

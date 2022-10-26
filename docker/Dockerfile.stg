@@ -29,6 +29,7 @@ WORKDIR /app/
 
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/storage .
+COPY ./migration ./migration
 
 # Command to run the executable
 CMD ["./storage"]

@@ -8,11 +8,12 @@ import (
 	"github.com/gavrilaf/wardrobe/pkg/api/dto"
 	"github.com/gavrilaf/wardrobe/pkg/fs"
 	"github.com/gavrilaf/wardrobe/pkg/repo"
+	"github.com/gavrilaf/wardrobe/pkg/utils/log"
 )
 
 type Manager interface {
 	CreateObject(ctx context.Context, fo dto.FO) (int, error)
-	UploadContent(ctx context.Context, id int, r io.Reader) error
+	UploadContent(ctx context.Context, id int, r io.Reader, size int64) error
 }
 
 type Config struct {
@@ -66,10 +67,31 @@ func (m *manager) CreateObject(ctx context.Context, fo dto.FO) (int, error) {
 		return nil
 	})
 
+	if err != nil {
+		return 0, fmt.Errorf("failed to create file object, %w", err)
+	}
+
+	log.FromContext(ctx).Infof("object created (%d, %s, %s)", fileObjectID, fo.Name, fo.ContentType)
+
 	return fileObjectID, err
 }
 
-func (m *manager) UploadContent(ctx context.Context, id int, r io.Reader) error {
-	//TODO implement me
-	panic("implement me")
+func (m *manager) UploadContent(ctx context.Context, id int, r io.Reader, size int64) error {
+	foDb, err := m.fileObjects.GetById(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve file object from db %d, %w", id, err)
+	}
+
+	err = m.stg.CreateObject(ctx, fs.Object{
+		Name:        foDb.Name,
+		ContentType: foDb.ContentType,
+		Size:        size,
+		Reader:      r,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to upload object to the storage (%d, %s), %w", id, foDb.Name, err)
+	}
+
+	log.FromContext(ctx).Infof("object uploaded, (%d, %s, %s, %d)", id, foDb.Name, foDb.ContentType, size)
+	return nil
 }

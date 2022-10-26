@@ -27,7 +27,7 @@ func BindingError(err error) *echo.HTTPError {
 
 func LogicError(err error) *echo.HTTPError {
 	switch {
-	case errors.As(err, ForbiddenError{}):
+	case errors.As(err, &ForbiddenError{}):
 		return echo.NewHTTPError(http.StatusForbidden, err.Error())
 	}
 

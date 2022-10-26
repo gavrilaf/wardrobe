@@ -61,6 +61,16 @@ func NewDB(ctx context.Context, connString string, maxConn int32) (*DB, error) {
 	var pool *pgxpool.Pool
 	operation := func() error {
 		pool, err = pgxpool.NewWithConfig(ctx, config)
+		if err != nil {
+			return backoff.Permanent(err)
+		}
+
+		// pool created as lazy, so we must ping db to acquire the real connection
+		err = pool.Ping(ctx)
+		if err != nil {
+			log.WithError(log.FromContext(ctx), err).Info("failed to ping database")
+		}
+		
 		return err
 	}
 
@@ -85,8 +95,7 @@ func (db *DB) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), pingTimeout)
 	defer cancel()
 
-	_, err := db.pool.Exec(ctx, `select 1;`)
-	return err
+	return db.pool.Ping(ctx)
 }
 
 func (db *DB) Close(ctx context.Context) {

@@ -1,0 +1,34 @@
+FROM golang:1.18.4 as builder
+
+# Set the Current Working Directory inside the container
+WORKDIR /app
+
+# Copy go mod and sum files
+COPY go.mod go.sum ./
+
+# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
+RUN go mod download
+
+# Copy the source from the current directory to the Working Directory inside the container
+COPY cmd cmd
+COPY pkg pkg
+
+# Build the Go app
+RUN go version
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o wardrobe ./cmd
+
+######## Start a new stage from scratch #######
+FROM alpine:3.16
+
+RUN apk --no-cache add ca-certificates
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache tzdata
+
+WORKDIR /app/
+
+# Copy the Pre-built binary file from the previous stage
+COPY --from=builder /app/wardrobe .
+
+# Command to run the executable
+CMD ["./wardrobe"]

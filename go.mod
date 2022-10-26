@@ -8,6 +8,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/jackc/pgx/v5 v5.0.4
 	github.com/jackc/pgxutil v0.0.0-20220430230859-aa3fd1dd3795
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/ory/dockertest v3.3.5+incompatible
 	github.com/stretchr/testify v1.8.1

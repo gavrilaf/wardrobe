@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/gavrilaf/wardrobe/pkg/repo"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -13,9 +14,26 @@ import (
 )
 
 func main() {
+	cfg, err := ReadConfig()
+	if err != nil {
+		log.L.Fatalf("failed to read config, %v", err)
+	}
+
 	ctx := context.Background()
-	log.InitLog(true)
+	log.InitLog(cfg.Debug)
 	logger := log.FromContext(ctx)
+
+	// DB and file storage
+	db, err := repo.NewDB(ctx, cfg.DBConnString, 5)
+	if err != nil {
+		log.WithError(logger, err).Fatal("failed to init database")
+	}
+
+	err = db.Ping()
+	if err != nil {
+		log.WithError(logger, err).Fatal("failed to ping db")
+	}
+	logger.Info("DB is successfully connected")
 
 	foManager := api_stg.NewManager()
 
@@ -32,11 +50,11 @@ func main() {
 	api_stg.Assemble(root, foManager)
 
 	s := &http.Server{
-		Addr:    ":8653",
+		Addr:    cfg.Port,
 		Handler: e,
 	}
 
-	logger.Infof("wardrobe is starting")
+	logger.Infof("wardrobe storage api is starting on port %s", cfg.Port)
 
 	quitChan := make(chan struct{}, 1)
 	s = server.RunHTTP(ctx, s, quitChan)

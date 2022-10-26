@@ -1,0 +1,25 @@
+version: "3.2"
+services:
+  postgres:
+    image: postgres:15.0
+    restart: always
+    environment:
+      POSTGRES_DB: wd
+      POSTGRES_USER: wd
+      POSTGRES_PASSWORD: wd
+    ports:
+      - "5432:5432"
+  stg-api:
+    build:
+      context: .
+      args:
+        - BUILD_PARAMS=-a -race
+      dockerfile: docker/Dockerfile.stg
+    ports:
+      - "8443:8443"
+    depends_on:
+      - postgres
+    environment:
+      DEBUG: "true"
+      PORT: ":8443"
+      POSTGRES_CONNSTR: "postgres://wd:wd@postgresql:5432/wd?sslmode=disable"

@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/blendle/zapdriver v1.3.1
 	github.com/cenkalti/backoff v2.2.1+incompatible
+	github.com/georgysavva/scany v1.2.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/jackc/pgx/v5 v5.0.4
 	github.com/jackc/pgxutil v0.0.0-20220430230859-aa3fd1dd3795
@@ -36,6 +37,7 @@ require (
 	github.com/jackc/pgsql v0.0.0-20200214204435-ebb58a15ff4a // indirect
 	github.com/jackc/pgtype v1.12.0 // indirect
 	github.com/jackc/pgx/v4 v4.14.2-0.20211129172902-cf0de913ee8f // indirect
+	github.com/jackc/puddle v1.2.0 // indirect
 	github.com/jackc/puddle/v2 v2.0.0 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/lib/pq v1.10.2 // indirect
@@ -48,6 +50,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect

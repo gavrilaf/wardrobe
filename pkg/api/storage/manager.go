@@ -52,7 +52,7 @@ func (m *manager) CreateObject(ctx context.Context, fo dto.FO) (int, error) {
 		}
 
 		for _, tag := range fo.Tags {
-			tagID, err := m.tags.GetOrCreate(ctx, tag)
+			tagID, err := m.tags.GetOrCreateTag(ctx, tag)
 			if err != nil {
 				return fmt.Errorf("failed to get or create tag (%s, %s), %w", fo.Name, tag, err)
 			}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/gavrilaf/wardrobe/pkg/fs/minio"
 	"github.com/gavrilaf/wardrobe/pkg/repo"
 	"net/http"
 
@@ -23,7 +24,7 @@ func main() {
 	log.InitLog(cfg.Debug)
 	logger := log.FromContext(ctx)
 
-	// DB and file storage
+	// Database
 	db, err := repo.NewDB(ctx, cfg.DBConnString, 5)
 	if err != nil {
 		log.WithError(logger, err).Fatal("failed to init database")
@@ -35,7 +36,24 @@ func main() {
 	}
 	logger.Info("DB is successfully connected")
 
-	foManager := api_stg.NewManager()
+	// Storage
+	stg, err := minio.New(cfg.MinioEndpoint, cfg.MinioUser, cfg.MinioPassword, cfg.FOBucket)
+	if err != nil {
+		log.WithError(logger, err).Fatal("failed to connect to the files storage")
+	}
+
+	if err = stg.Prepare(ctx); err != nil {
+		log.WithError(logger, err).Fatal("failed to connect to prepare storage")
+	}
+
+	// API
+
+	foManager := api_stg.NewManager(api_stg.Config{
+		Tx:          db,
+		FileObjects: db,
+		Tags:        db,
+		Stg:         stg,
+	})
 
 	e := echo.New()
 	e.Use(em.CORSWithConfig(em.DefaultCORSConfig))

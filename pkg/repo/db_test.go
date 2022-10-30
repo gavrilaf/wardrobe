@@ -7,18 +7,16 @@ import (
 	"fmt"
 	"log"
 	"testing"
-	"time"
 
-	"github.com/ory/dockertest"
+	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/gavrilaf/wardrobe/pkg/repo"
 )
 
 var (
-	dbName       = "wardrobe-test"
-	db           *repo.DB
-	kyivLocation *time.Location
+	dbName = "wardrobe-test"
+	db     *repo.DB
 )
 
 func TestMain(m *testing.M) {
@@ -27,11 +25,6 @@ func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		log.Panicf("could not connect to docker: %s", err)
-	}
-
-	kyivLocation, err = time.LoadLocation("Europe/Kiev") // server timezone
-	if err != nil {
-		log.Panicf("could not load timezone: %s", err)
 	}
 
 	// pulls an image, creates a container based on it and runs it

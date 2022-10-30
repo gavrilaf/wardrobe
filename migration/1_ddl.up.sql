@@ -3,19 +3,23 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS file_objects
 (
     id              SERIAL PRIMARY KEY,
-    name            VARCHAR(512) NOT NULL ,
-    content_type    VARCHAR(20) NOT NULL ,
+    name            VARCHAR(512) NOT NULL,
+    content_type    VARCHAR(20) NOT NULL,
+    author          VARCHAR(256) NOT NULL,
+    source          VARCHAR(512) NOT NULL,
+    bucket          VARCHAR(256) NOT NULL,
+    file_name       VARCHAR(256) NOT NULL,
     size            INT NOT NULL DEFAULT 0,
     created         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     uploaded        TIMESTAMPTZ
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS unq_file_objects_name_index ON file_objects (name);
+CREATE UNIQUE INDEX IF NOT EXISTS unq_file_objects_name_index ON file_objects (bucket, file_name);
 
 CREATE TABLE IF NOT EXISTS tags
 (
     id    SERIAL PRIMARY KEY,
-    value VARCHAR(150) NOT NULL UNIQUE
+    value VARCHAR(100) NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS file_objects_tags

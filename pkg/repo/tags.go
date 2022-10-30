@@ -9,7 +9,9 @@ import (
 type Tags interface {
 	GetOrCreateTag(ctx context.Context, tag string) (int, error)
 	GetTag(ctx context.Context, id int) (string, error)
+
 	LinkTag(ctx context.Context, foID, tagID int) error
+	GetFileObjectTags(ctx context.Context, foID int) ([]string, error)
 }
 
 func (db *DB) GetOrCreateTag(ctx context.Context, tag string) (int, error) {
@@ -31,5 +33,17 @@ func (db *DB) GetTag(ctx context.Context, id int) (string, error) {
 }
 
 func (db *DB) LinkTag(ctx context.Context, foID, tagID int) error {
-	return nil
+	query := "INSERT INTO file_objects_tags(file_object_id, tag_id) VALUES ($1, $2)"
+
+	_, err := db.Doer(ctx).Exec(ctx, query, foID, tagID)
+	return err
+}
+
+func (db *DB) GetFileObjectTags(ctx context.Context, foID int) ([]string, error) {
+	query := "SELECT value " +
+		"FROM tags t JOIN file_objects_tags ft ON t.id = ft.tag_id " +
+		"WHERE ft.file_object_id = $1 " +
+		"ORDER BY value"
+
+	return pgxutil.SelectColumn[string](ctx, db.Doer(ctx), query, foID)
 }

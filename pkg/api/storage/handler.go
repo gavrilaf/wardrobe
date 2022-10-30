@@ -19,8 +19,11 @@ func Assemble(root *echo.Group, m Manager) {
 
 	g := root.Group("/fo")
 	{
-		g.POST("", h.addObject)
+		g.POST("", h.createObject)
 		g.PUT("/:id", h.uploadContent)
+
+		g.GET("/:id", h.getObject)
+		g.GET("/:id/meta", h.getObjectMeta)
 	}
 }
 
@@ -28,7 +31,7 @@ type handler struct {
 	manager Manager
 }
 
-func (h *handler) addObject(c echo.Context) error {
+func (h *handler) createObject(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	var fo dto.FO
@@ -73,4 +76,24 @@ func (h *handler) uploadContent(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+func (h *handler) getObject(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return httpx.ParameterError("id", err)
+	}
+
+	fo, err := h.manager.GetObject(ctx, id)
+	if err != nil {
+		return httpx.LogicError(err)
+	}
+
+	return c.JSON(http.StatusOK, fo)
+}
+
+func (h *handler) getObjectMeta(c echo.Context) error {
+	return nil
 }

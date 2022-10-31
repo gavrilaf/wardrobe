@@ -30,6 +30,17 @@ job "wardrobe" {
         image = "ghcr.io/gavrilaf/wardrobe-stg-api:0.0.1"
         ports = ["wardrobe"]
       }
+
+      connect {
+        gateway {
+          proxy {}
+          terminating {
+            service {
+              name = "postgres"
+            }
+          }
+        }
+      }
     }
   }
 }

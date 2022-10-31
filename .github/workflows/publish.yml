@@ -1,9 +1,12 @@
 name: Build And Publish image
 
 on:
-  release:
-    branches: [ master ]
-    types: [ released ]
+  push:
+    branches:
+      - master
+  #release:
+  #  branches: [ master ]
+  #  types: [ released ]
 
 
 env:
@@ -22,7 +25,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Build image
-        run: docker build . --file /docker/Dockerfile.stg --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
+        run: docker build . --file ./docker/Dockerfile.stg --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
 
       - name: Log in to registry
         # This is where you will update the personal access token to GITHUB_TOKEN

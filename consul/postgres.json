@@ -1,6 +1,6 @@
 {
   "Node": "postgres_node",
-  "Address": "127.0.0.1",
+  "Address": "10.0.0.2",
   "NodeMeta": {
     "external-node": "true",
     "external-probe": "true"

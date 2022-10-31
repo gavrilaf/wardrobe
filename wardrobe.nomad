@@ -9,7 +9,7 @@ job "wardrobe" {
     count = 1
 
     network {
-      mode = "bridge"
+
       port "api_port" {
         to = "8443"
       }

@@ -14,13 +14,18 @@ CREATE TABLE IF NOT EXISTS file_objects
     uploaded        TIMESTAMPTZ
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS unq_file_objects_name_index ON file_objects (bucket, file_name);
+CREATE UNIQUE INDEX IF NOT EXISTS unq_file_objects_fo_path_index ON file_objects (bucket, file_name);
+CREATE INDEX IF NOT EXISTS file_objects_name_index ON file_objects (name);
+CREATE INDEX IF NOT EXISTS file_objects_author_index ON file_objects (author);
+CREATE INDEX IF NOT EXISTS file_objects_source_index ON file_objects (source);
 
 CREATE TABLE IF NOT EXISTS tags
 (
     id    SERIAL PRIMARY KEY,
     value VARCHAR(100) NOT NULL UNIQUE
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS unq_tags_value_index ON tags (value);
 
 CREATE TABLE IF NOT EXISTS file_objects_tags
 (

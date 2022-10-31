@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/gavrilaf/wardrobe/pkg/api/dto"
@@ -61,9 +62,11 @@ func (m *manager) CreateObject(ctx context.Context, fo dto.FO) (int, error) {
 		}
 
 		for _, tag := range fo.Tags {
-			tagID, err := m.tags.GetOrCreateTag(ctx, tag)
+			tt := strings.ToLower(tag)
+
+			tagID, err := m.tags.GetOrCreateTag(ctx, tt)
 			if err != nil {
-				return fmt.Errorf("failed to get or create tag (%s, %s), %w", fo.Name, tag, err)
+				return fmt.Errorf("failed to get or create tag (%s, %s), %w", fo.Name, tt, err)
 			}
 
 			if err = m.tags.LinkTag(ctx, foID, tagID); err != nil {
@@ -134,5 +137,5 @@ func (m *manager) GetObject(ctx context.Context, id int) (dto.FO, error) {
 // move this logic
 
 func makeFileName(fo dto.FO) string {
-	return fmt.Sprintf("%s-%s-%d", fo.Source, fo.FileName, time.Now().UnixMilli())
+	return fmt.Sprintf("%s_%s_%d", fo.Source, fo.Name, time.Now().UnixMilli())
 }

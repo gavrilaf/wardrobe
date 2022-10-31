@@ -17,17 +17,17 @@ job "wardrobe" {
       driver = "docker"
 
       env {
-        DEBUG: "true"
-        PORT: ":8443"
-        POSTGRES_CONNSTR: "postgres://wardrobe:wardrobe@127.0.0.1:5432/wardrobe?sslmode=disable"
-        MINIO_USER: minio
-        MINIO_PASSWORD: secret
-        MINIO_ENDPOINT: "127.0.0.1:9000"
-        FO_BUCKET: "fo-bucket"
+        DEBUG = "true"
+        PORT = ":8443"
+        POSTGRES_CONNSTR = "postgres://wardrobe:wardrobe@127.0.0.1:5432/wardrobe?sslmode=disable"
+        MINIO_USER = "minio"
+        MINIO_PASSWORD = "secret"
+        MINIO_ENDPOINT = "127.0.0.1:9000"
+        FO_BUCKET = "fo-bucket"
       }
 
       config {
-        image = "wardrobe:0.0.1"
+        image = "ghcr.io/gavrilaf/wardrobe-stg-api:0.0.1"
         ports = ["wardrobe"]
       }
     }

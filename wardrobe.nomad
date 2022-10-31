@@ -4,16 +4,42 @@ job "wardrobe" {
 
   type = "service"
 
-  group "wardrobe" {
-    network {
-      port "wardrobe" {
-        to = 8443
-      }
-    }
+  group "wardrobe-stg-api" {
 
     count = 1
 
-    task "storage" {
+    network {
+      mode = "bridge"
+      port "api_port" {
+        to = "8443"
+      }
+    }
+
+    service {
+      name = "wardrobe-stg-api"
+      port = "8443"
+
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "postgres"
+              local_bind_port  = 5432
+            }
+          }
+        }
+      }
+
+      check {
+        type = "http"
+        port = "api_port"
+        path = "/healthz"
+        interval = "2s"
+        timeout = "2s"
+      }
+    }
+
+    task "stg-api" {
       driver = "docker"
 
       env {
@@ -28,18 +54,7 @@ job "wardrobe" {
 
       config {
         image = "ghcr.io/gavrilaf/wardrobe-stg-api:0.0.1"
-        ports = ["wardrobe"]
-      }
-
-      connect {
-        gateway {
-          proxy {}
-          terminating {
-            service {
-              name = "postgres"
-            }
-          }
-        }
+        ports = ["api_port"]
       }
     }
   }

@@ -1,12 +1,9 @@
 name: Build And Publish image
 
 on:
-  push:
-    branches:
-      - master
-  #release:
-  #  branches: [ master ]
-  #  types: [ released ]
+  release:
+    branches: [ master ]
+    types: [ released ]
 
 
 env:

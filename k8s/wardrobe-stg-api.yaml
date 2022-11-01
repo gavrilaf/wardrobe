@@ -20,7 +20,7 @@ spec:
         - name: wardrobe-stg-api
           image: ghcr.io/gavrilaf/wardrobe-stg-api:0.0.1
           ports:
-              containerPort: 80
+          - containerPort: 80
           livenessProbe:
             httpGet:
               path: /health

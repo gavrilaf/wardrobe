@@ -1,0 +1,18 @@
+version: "3.2"
+services:
+  stg-api:
+    build:
+      context: .
+      args:
+        - BUILD_PARAMS=-a -race
+      dockerfile: docker/Dockerfile.stg
+    ports:
+      - "8443:8443"
+    environment:
+      DEBUG: "true"
+      PORT: ":8443"
+      POSTGRES_CONNSTR: "postgres://wd:wd@172.17.0.1:5432/wd?sslmode=disable"
+      MINIO_USER: minio
+      MINIO_PASSWORD: miniopsw
+      MINIO_ENDPOINT: "172.17.0.1:9000"
+      FO_BUCKET: "fo-bucket"

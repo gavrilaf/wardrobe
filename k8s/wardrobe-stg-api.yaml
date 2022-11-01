@@ -1,0 +1,62 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wardrobe-api-deploy
+  namespace: wardrobe
+  labels:
+    app: wardrobe-stg-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wardrobe-stg-api
+  template:
+    metadata:
+      labels:
+        app: wardrobe-stg-api
+    spec:
+      containers:
+        - name: wardrobe-stg-api
+          image: ghcr.io/gavrilaf/wardrobe-stg-api:0.0.1
+          ports:
+              containerPort: 80
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: ${PORT}
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: ${PORT}
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 5
+          envFrom:
+            - configMapRef:
+                name: wardrobe
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wardrobe-stg-api-service
+  namespace: wardrobe
+  labels:
+    service: wardrobe-stg-api-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+  selector:
+    app: wardrobe-stg-api

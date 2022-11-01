@@ -1,6 +1,8 @@
 version: "3.2"
 services:
   stg-api:
+    extra_hosts:
+      - host.docker.internal:host-gateway
     build:
       context: .
       args:
@@ -11,8 +13,8 @@ services:
     environment:
       DEBUG: "true"
       PORT: ":8443"
-      POSTGRES_CONNSTR: "postgres://wd:wd@172.17.0.1:5432/wd?sslmode=disable"
-      MINIO_USER: minio
-      MINIO_PASSWORD: miniopsw
+      POSTGRES_CONNSTR: "postgres://wardrobe:wardrobe@host.docker.internal:5432/wardrobe?sslmode=disable"
+      MINIO_USER: minio-wardrobe
+      MINIO_PASSWORD: minio-wardrobe-psw
       MINIO_ENDPOINT: "172.17.0.1:9000"
       FO_BUCKET: "fo-bucket"

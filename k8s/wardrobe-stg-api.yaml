@@ -24,7 +24,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: ${PORT}
+              port: 80
               scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 10
@@ -34,7 +34,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /health
-              port: ${PORT}
+              port: 80
               scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 10

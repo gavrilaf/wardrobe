@@ -4,9 +4,9 @@ metadata:
   name: wardrobe
 data:
   DEBUG: "true"
-  PORT: ":8443"
-  POSTGRES_CONNSTR: "postgres://wardrobe:wardrobe@127.0.0.1:5432/wardrobe?sslmode=disable"
+  PORT: ":80"
+  POSTGRES_CONNSTR: "postgres://wardrobe:wardrobe@host.k3d.internal:5432/wardrobe?sslmode=disable"
   MINIO_USER: "minio"
   MINIO_PASSWORD: "secret"
-  MINIO_ENDPOINT: "127.0.0.1:9000"
+  MINIO_ENDPOINT: "host.k3d.internal:9000"
   FO_BUCKET: "fo-bucket"

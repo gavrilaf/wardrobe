@@ -129,30 +129,6 @@ func (db *DB) Close(ctx context.Context) {
 	log.FromContext(ctx).Info("database closed")
 }
 
-/*func (db *DB) Migrate(ctx context.Context, path string) error {
-	dir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	logger := log.FromContext(ctx).With("mod", "DB migration")
-
-	sourceURL := "file:///" + filepath.Join(dir, path)
-	logger.Infof("Looking for migration scripts in: %s\n", sourceURL)
-
-	connStr := db.pool.Config().ConnString()
-
-	m, err := migrate.New(sourceURL, connStr)
-	if err != nil {
-		return err
-	}
-
-	if err = m.Up(); err != migrate.ErrNoChange {
-		return err
-	}
-	return nil
-}*/
-
 func IsNoRowsFound(err error) bool {
 	return err.Error() == pgx.ErrNoRows.Error()
 }

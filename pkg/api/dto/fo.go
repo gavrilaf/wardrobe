@@ -19,8 +19,8 @@ type FO struct {
 	Uploaded    string   `json:"uploaded"`
 }
 
-func (o FO) ToDBType() dbtypes.FO {
-	return dbtypes.FO{
+func (o FO) ToDBType() dbtypes.InfoObject {
+	return dbtypes.InfoObject{
 		ID:          o.ID,
 		Name:        o.Name,
 		ContentType: o.ContentType,
@@ -29,7 +29,7 @@ func (o FO) ToDBType() dbtypes.FO {
 	}
 }
 
-func MakeFOFromDBType(o dbtypes.FO) FO {
+func MakeFOFromDBType(o dbtypes.InfoObject) FO {
 	fo := FO{
 		ID:          o.ID,
 		Name:        o.Name,

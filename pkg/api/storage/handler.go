@@ -17,7 +17,7 @@ func Assemble(root *echo.Group, m Manager) {
 		manager: m,
 	}
 
-	g := root.Group("/fo")
+	g := root.Group("/storage")
 	{
 		g.POST("", h.createObject)
 		g.PUT("/:id", h.uploadContent)

@@ -14,22 +14,8 @@ type Storage struct {
 	mock.Mock
 }
 
-// CreateObject provides a mock function with given fields: ctx, fo
-func (_m *Storage) CreateObject(ctx context.Context, fo fs.Object) error {
-	ret := _m.Called(ctx, fo)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, fs.Object) error); ok {
-		r0 = rf(ctx, fo)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DeleteObject provides a mock function with given fields: ctx, name
-func (_m *Storage) DeleteObject(ctx context.Context, name string) error {
+// CreateBucket provides a mock function with given fields: ctx, name
+func (_m *Storage) CreateBucket(ctx context.Context, name string) error {
 	ret := _m.Called(ctx, name)
 
 	var r0 error
@@ -42,15 +28,50 @@ func (_m *Storage) DeleteObject(ctx context.Context, name string) error {
 	return r0
 }
 
-// GetObject provides a mock function with given fields: ctx, name
-func (_m *Storage) GetObject(ctx context.Context, name string) (fs.Object, error) {
+// CreateFile provides a mock function with given fields: ctx, f
+func (_m *Storage) CreateFile(ctx context.Context, f fs.File) error {
+	ret := _m.Called(ctx, f)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, fs.File) error); ok {
+		r0 = rf(ctx, f)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// GetFile provides a mock function with given fields: ctx, bucketName, fileName
+func (_m *Storage) GetFile(ctx context.Context, bucketName string, fileName string) (fs.File, error) {
+	ret := _m.Called(ctx, bucketName, fileName)
+
+	var r0 fs.File
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) fs.File); ok {
+		r0 = rf(ctx, bucketName, fileName)
+	} else {
+		r0 = ret.Get(0).(fs.File)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, bucketName, fileName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// IsBucketExists provides a mock function with given fields: ctx, name
+func (_m *Storage) IsBucketExists(ctx context.Context, name string) (bool, error) {
 	ret := _m.Called(ctx, name)
 
-	var r0 fs.Object
-	if rf, ok := ret.Get(0).(func(context.Context, string) fs.Object); ok {
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
 		r0 = rf(ctx, name)
 	} else {
-		r0 = ret.Get(0).(fs.Object)
+		r0 = ret.Get(0).(bool)
 	}
 
 	var r1 error
@@ -61,4 +82,18 @@ func (_m *Storage) GetObject(ctx context.Context, name string) (fs.Object, error
 	}
 
 	return r0, r1
+}
+
+// Ping provides a mock function with given fields:
+func (_m *Storage) Ping() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }

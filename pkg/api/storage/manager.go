@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	dto2 "github.com/gavrilaf/wardrobe/pkg/domain/dto"
 	"io"
 	"strings"
 	"time"
@@ -22,33 +23,30 @@ type Manager interface {
 
 type Config struct {
 	Tx          repo.TxRunner
-	FileObjects repo.FileObjects
-	Tags        repo.Tags
-	Stg         fs.Storage
+	InfoObjects repo.InfoObjects
+	FS          fs.Storage
 }
 
 func NewManager(cfg Config) Manager {
 	return &manager{
-		tx:          cfg.Tx,
-		fileObjects: cfg.FileObjects,
-		tags:        cfg.Tags,
-		stg:         cfg.Stg,
+		tx: cfg.Tx,
+		db: cfg.InfoObjects,
+		fs: cfg.FS,
 	}
 }
 
 //
 
 type manager struct {
-	tx          repo.TxRunner
-	fileObjects repo.FileObjects
-	tags        repo.Tags
-	stg         fs.Storage
+	tx repo.TxRunner
+	db repo.InfoObjects
+	fs fs.Storage
 }
 
-func (m *manager) CreateObject(ctx context.Context, fo dto.FO) (int, error) {
+func (m *manager) CreateObject(ctx context.Context, obj dto) (int, error) {
 	var (
-		fileObjectID int
-		err          error
+		objectID int
+		err      error
 	)
 
 	err = m.tx.RunWithTx(ctx, func(ctx context.Context) error {
@@ -128,7 +126,7 @@ func (m *manager) GetObject(ctx context.Context, id int) (dto.FO, error) {
 		return dto.FO{}, fmt.Errorf("failed to retrieve file object tags from db %d, %w", id, err)
 	}
 
-	fo := dto.MakeFOFromDBType(foDb)
+	fo := dto2.MakeFOFromDBType(foDb)
 	fo.Tags = tags
 
 	return fo, nil

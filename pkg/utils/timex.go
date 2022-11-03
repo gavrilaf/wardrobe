@@ -13,3 +13,7 @@ func DT(year int, month time.Month, day, hour, min, sec, nsec int) time.Time {
 func TimeToJsonString(t time.Time) string {
 	return t.UTC().Format(time.RFC3339Nano)
 }
+
+func ParseJsonTime(s string) (time.Time, error) {
+	return time.Parse(time.RFC3339Nano, s)
+}

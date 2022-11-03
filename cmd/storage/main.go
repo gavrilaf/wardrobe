@@ -44,13 +44,13 @@ func main() {
 	logger.Info("DB migration ok")
 
 	// Storage
-	stg, err := minio.New(cfg.MinioEndpoint, cfg.MinioUser, cfg.MinioPassword, cfg.FOBucket)
+	stg, err := minio.New(cfg.MinioEndpoint, cfg.MinioUser, cfg.MinioPassword)
 	if err != nil {
-		log.WithError(logger, err).Fatal("failed to connect to the files storage")
+		log.WithError(logger, err).Fatal("failed to connect to create files storage")
 	}
 
-	if err = stg.Prepare(ctx); err != nil {
-		log.WithError(logger, err).Fatal("failed to connect to prepare storage")
+	if err = stg.Ping(); err != nil {
+		log.WithError(logger, err).Fatal("file storage is offline")
 	}
 
 	// API

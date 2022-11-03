@@ -17,7 +17,7 @@ import (
 type Manager interface {
 	CreateInfoObject(ctx context.Context, obj dto.InfoObject) (int, error)
 	AddFile(ctx context.Context, infoObjID int, fileMeta dto.File, r io.Reader) (int, error)
-	FinilizeInfoObject(ctx context.Context, id int) error
+	FinalizeInfoObject(ctx context.Context, id int) error
 
 	GetInfoObject(ctx context.Context, id int) (dto.InfoObject, error)
 }
@@ -92,13 +92,20 @@ func (m *manager) AddFile(ctx context.Context, infoObjID int, fileMeta dto.File,
 		}
 
 		if obj.Uploaded != nil {
-			return fmt.Errorf("info object %d finalized, failed to add file, %w", infoObjID, err)
+			return fmt.Errorf("info object %d finalized, failed to add file", infoObjID)
 		}
 
-		bucket := "some-bucket"
-
 		dbFileMeta := fileMeta.ToDbType()
+
+		bucket := m.cnf.GetBucket(obj, dbFileMeta)
+		fileName, err := m.cnf.GenerateFileName(obj, dbFileMeta)
+		if err != nil {
+			return fmt.Errorf("failed to generate file name (%v, %v), %w", obj, dbFileMeta, err)
+		}
+
 		dbFileMeta.InfoObjectID = infoObjID
+		dbFileMeta.Bucket = bucket
+		dbFileMeta.Name = fileName
 
 		fileID, err = m.db.AddFile(ctx, dbFileMeta)
 		if err != nil {
@@ -107,7 +114,7 @@ func (m *manager) AddFile(ctx context.Context, infoObjID int, fileMeta dto.File,
 
 		file := fs.File{
 			Bucket:      bucket,
-			Name:        fileMeta.Name,
+			Name:        fileName,
 			ContentType: fileMeta.ContentType,
 			Size:        fileMeta.Size,
 			Reader:      io.NopCloser(r),
@@ -130,9 +137,9 @@ func (m *manager) AddFile(ctx context.Context, infoObjID int, fileMeta dto.File,
 	return fileID, nil
 }
 
-func (m *manager) FinilizeInfoObject(ctx context.Context, id int) error {
+func (m *manager) FinalizeInfoObject(ctx context.Context, id int) error {
 	if err := m.db.MarkUploaded(ctx, id); err != nil {
-		return fmt.Errorf("failed to finilize info object %d", id)
+		return fmt.Errorf("failed to finalize info object %d", id)
 	}
 
 	log.FromContext(ctx).Infof("info object %d finalized", id)

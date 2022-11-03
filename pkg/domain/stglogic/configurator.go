@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/gavrilaf/wardrobe/pkg/utils/log"
+
 	"github.com/gavrilaf/wardrobe/pkg/fs"
 	"github.com/gavrilaf/wardrobe/pkg/repo/dbtypes"
 	"github.com/gavrilaf/wardrobe/pkg/utils/idgen"
@@ -26,18 +28,36 @@ func NewConfigurator(fs fs.Storage, snf idgen.Snowflake) Configurator {
 
 //
 
+const bucketName = "wardrobe-info-objects"
+
 type configurator struct {
 	fs  fs.Storage
 	snf idgen.Snowflake
 }
 
 func (c *configurator) PrepareStorage(ctx context.Context) error {
+	exists, err := c.fs.IsBucketExists(ctx, bucketName)
+	if err != nil {
+		return fmt.Errorf("failed to check bucket %s existing, %w", bucketName, err)
+	}
+
+	if !exists {
+		err = c.fs.CreateBucket(ctx, bucketName)
+		if err != nil {
+			return fmt.Errorf("failed to create bucket %s, %w", bucketName, err)
+		}
+
+		log.FromContext(ctx).Infof("bucket %s created", bucketName)
+	} else {
+		log.FromContext(ctx).Infof("bucket %s already exists", bucketName)
+	}
+
 	return nil
 }
 
 func (c *configurator) GetBucket(obj dbtypes.InfoObject, file dbtypes.File) string {
-	//TODO implement me
-	panic("implement me")
+	// simplest logic for now, only one static bucket
+	return bucketName
 }
 
 func (c *configurator) GenerateFileName(obj dbtypes.InfoObject, file dbtypes.File) (string, error) {

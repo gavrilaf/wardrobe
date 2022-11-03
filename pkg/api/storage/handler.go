@@ -23,7 +23,7 @@ func Assemble(root *echo.Group, m Manager) {
 
 		g.POST("", h.createObject)
 		g.POST("/:id/files", h.addFile)
-		g.PUT("/:id/finilize", h.finilizeObject)
+		g.PUT("/:id/finalize", h.finalizeObject)
 
 	}
 }
@@ -85,7 +85,7 @@ func (h *handler) addFile(c echo.Context) error {
 	return c.JSON(http.StatusCreated, echo.Map{"id": fileID})
 }
 
-func (h *handler) finilizeObject(c echo.Context) error {
+func (h *handler) finalizeObject(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	infoObjectID, err := strconv.Atoi(c.Param("id"))
@@ -93,7 +93,7 @@ func (h *handler) finilizeObject(c echo.Context) error {
 		return httpx.ParameterError("id", err)
 	}
 
-	if err := h.manager.FinilizeInfoObject(ctx, infoObjectID); err != nil {
+	if err := h.manager.FinalizeInfoObject(ctx, infoObjectID); err != nil {
 		return httpx.LogicError(err)
 	}
 

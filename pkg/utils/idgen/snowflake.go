@@ -21,6 +21,8 @@ var SnowflakeTime = time.Now
 // Snowflake unique IDs generator: https://en.wikipedia.org/wiki/Snowflake_ID
 // The current implementation will generate unique IDs for 69 years since Midnight 1 Jan 2021
 // Original implementation from Twitter (Scala): https://github.com/twitter-archive/snowflake/releases/tag/snowflake-2010
+
+//go:generate mockery --name Snowflake --outpkg idgenmocks --output ./idgenmocks --dir .
 type Snowflake interface {
 	NextID() (int64, error)
 }

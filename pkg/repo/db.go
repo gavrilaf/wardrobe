@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gavrilaf/wardrobe/pkg/utils/timex"
 	"os"
 	"path/filepath"
 	"time"
@@ -17,7 +18,6 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
-	"github.com/gavrilaf/wardrobe/pkg/utils"
 	"github.com/gavrilaf/wardrobe/pkg/utils/log"
 )
 
@@ -85,7 +85,7 @@ func NewDB(ctx context.Context, connString string, maxConn int32) (*DB, error) {
 	quit := make(chan struct{}, 1)
 
 	// log database statistic every 5 minutes
-	utils.FnTicker(logStatPeriod, quit, func() {
+	timex.FnTicker(logStatPeriod, quit, func() {
 		stat := pool.Stat()
 		log.FromContext(ctx).Infof("db stat(total=%d, acquired=%d, construction=%d, idle=%d)",
 			stat.TotalConns(), stat.AcquiredConns(), stat.ConstructingConns(), stat.IdleConns())

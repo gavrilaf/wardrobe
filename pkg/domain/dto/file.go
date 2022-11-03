@@ -2,7 +2,7 @@ package dto
 
 import (
 	"github.com/gavrilaf/wardrobe/pkg/repo/dbtypes"
-	"github.com/gavrilaf/wardrobe/pkg/utils"
+	"github.com/gavrilaf/wardrobe/pkg/utils/timex"
 )
 
 type File struct {
@@ -30,6 +30,6 @@ func FileFromDBType(f dbtypes.File) File {
 		Name:        f.Name,
 		ContentType: f.ContentType,
 		Size:        f.Size,
-		Uploaded:    utils.TimeToJsonString(f.Uploaded),
+		Uploaded:    timex.TimeToJsonString(f.Uploaded),
 	}
 }

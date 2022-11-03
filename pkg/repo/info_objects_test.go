@@ -4,6 +4,7 @@ package repo_test
 
 import (
 	"context"
+	"github.com/gavrilaf/wardrobe/pkg/utils/timex"
 	"testing"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 
 	"github.com/gavrilaf/wardrobe/pkg/repo"
 	"github.com/gavrilaf/wardrobe/pkg/repo/dbtypes"
-	"github.com/gavrilaf/wardrobe/pkg/utils"
 )
 
 func TestInfoObjects(t *testing.T) {
@@ -24,7 +24,7 @@ func TestInfoObjects(t *testing.T) {
 			Name:      "name",
 			Author:    "author",
 			Source:    "tg",
-			Published: utils.Date(2022, time.January, 10),
+			Published: timex.Date(2022, time.January, 10),
 		}
 
 		file1 = dbtypes.File{

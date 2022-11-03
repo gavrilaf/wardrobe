@@ -1,6 +1,7 @@
 package dto_test
 
 import (
+	"github.com/gavrilaf/wardrobe/pkg/utils/timex"
 	"testing"
 	"time"
 
@@ -8,7 +9,6 @@ import (
 
 	"github.com/gavrilaf/wardrobe/pkg/domain/dto"
 	"github.com/gavrilaf/wardrobe/pkg/repo/dbtypes"
-	"github.com/gavrilaf/wardrobe/pkg/utils"
 )
 
 func TestInfoObject(t *testing.T) {
@@ -16,7 +16,7 @@ func TestInfoObject(t *testing.T) {
 		Name:      "name",
 		Author:    "author",
 		Source:    "source",
-		Published: utils.DT(2002, time.April, 23, 12, 45, 0, 0),
+		Published: timex.DT(2002, time.April, 23, 12, 45, 0, 0),
 	}
 
 	dtoObj := dto.InfoObjectFromDBType(dbObj)

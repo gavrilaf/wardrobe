@@ -2,9 +2,9 @@ package dto
 
 import (
 	"fmt"
+	"github.com/gavrilaf/wardrobe/pkg/utils/timex"
 
 	"github.com/gavrilaf/wardrobe/pkg/repo/dbtypes"
-	"github.com/gavrilaf/wardrobe/pkg/utils"
 )
 
 type InfoObject struct {
@@ -20,7 +20,7 @@ type InfoObject struct {
 }
 
 func (o InfoObject) ToDBType() (dbtypes.InfoObject, error) {
-	tm, err := utils.ParseJsonTime(o.Published)
+	tm, err := timex.ParseJsonTime(o.Published)
 	if err != nil {
 		return dbtypes.InfoObject{}, fmt.Errorf("invalid published time %s (%s, %s, %s), %w", o.Published, o.Name, o.Source, o.Author, err)
 	}
@@ -39,14 +39,14 @@ func InfoObjectFromDBType(o dbtypes.InfoObject) InfoObject {
 		Name:      o.Name,
 		Source:    o.Source,
 		Author:    o.Author,
-		Published: utils.TimeToJsonString(o.Published),
-		Created:   utils.TimeToJsonString(o.Created),
+		Published: timex.TimeToJsonString(o.Published),
+		Created:   timex.TimeToJsonString(o.Created),
 		Files:     []File{},
 		Tags:      []string{},
 	}
 
 	if o.Uploaded != nil {
-		obj.Uploaded = utils.TimeToJsonString(*o.Uploaded)
+		obj.Uploaded = timex.TimeToJsonString(*o.Uploaded)
 	}
 
 	return obj

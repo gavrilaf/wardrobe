@@ -8,7 +8,7 @@ import (
 	em "github.com/labstack/echo/middleware"
 
 	mw "github.com/gavrilaf/wardrobe/pkg/api/middleware"
-	api_stg "github.com/gavrilaf/wardrobe/pkg/api/storage"
+	apistg "github.com/gavrilaf/wardrobe/pkg/api/storage"
 	"github.com/gavrilaf/wardrobe/pkg/fs/minio"
 	"github.com/gavrilaf/wardrobe/pkg/repo"
 	"github.com/gavrilaf/wardrobe/pkg/utils/log"
@@ -53,13 +53,14 @@ func main() {
 		log.WithError(logger, err).Fatal("file storage is offline")
 	}
 
+	logger.Info("File storage is online")
+
 	// API
 
-	foManager := api_stg.NewManager(api_stg.Config{
+	foManager := apistg.NewManager(apistg.Config{
 		Tx:          db,
-		FileObjects: db,
-		Tags:        db,
-		Stg:         stg,
+		InfoObjects: db,
+		FS:          stg,
 	})
 
 	e := echo.New()
@@ -73,7 +74,7 @@ func main() {
 
 	root := e.Group("/api/v1")
 
-	api_stg.Assemble(root, foManager)
+	apistg.Assemble(root, foManager)
 
 	s := &http.Server{
 		Addr:    cfg.Port,

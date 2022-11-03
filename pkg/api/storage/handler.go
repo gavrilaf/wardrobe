@@ -19,7 +19,7 @@ func Assemble(root *echo.Group, m Manager) {
 
 	g := root.Group("/info_objects")
 	{
-		g.GET("", h.getObject)
+		g.GET("/:id", h.getObject)
 
 		g.POST("", h.createObject)
 		g.POST("/:id/files", h.addFile)

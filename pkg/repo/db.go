@@ -101,7 +101,7 @@ func (db *DB) Migrate(ctx context.Context, path string) error {
 	}
 
 	sourceURL := "file:///" + filepath.Join(dir, path)
-	log.FromContext(ctx).Infof("Looking for migration scripts in: %s\n", sourceURL)
+	log.FromContext(ctx).Infof("Looking for migration scripts in: %s", sourceURL)
 
 	connStr := db.pool.Config().ConnString()
 

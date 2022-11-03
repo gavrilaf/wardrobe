@@ -7,7 +7,7 @@ import (
 
 	"github.com/labstack/echo"
 
-	"github.com/gavrilaf/wardrobe/pkg/api/dto"
+	"github.com/gavrilaf/wardrobe/pkg/domain/dto"
 	"github.com/gavrilaf/wardrobe/pkg/utils/httpx"
 	"github.com/gavrilaf/wardrobe/pkg/utils/log"
 )
@@ -17,13 +17,14 @@ func Assemble(root *echo.Group, m Manager) {
 		manager: m,
 	}
 
-	g := root.Group("/storage")
+	g := root.Group("/info_objects")
 	{
-		g.POST("", h.createObject)
-		g.PUT("/:id", h.uploadContent)
+		g.GET("", h.getObject)
 
-		g.GET("/:id", h.getObject)
-		g.GET("/:id/meta", h.getObjectMeta)
+		g.POST("", h.createObject)
+		g.POST("/:id/files", h.addFile)
+		g.PUT("/:id/finilize", h.finilizeObject)
+
 	}
 }
 
@@ -34,12 +35,12 @@ type handler struct {
 func (h *handler) createObject(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	var fo dto.FO
-	if err := c.Bind(&fo); err != nil {
+	var obj dto.InfoObject
+	if err := c.Bind(&obj); err != nil {
 		return httpx.BindingError(err)
 	}
 
-	id, err := h.manager.CreateObject(ctx, fo)
+	id, err := h.manager.CreateInfoObject(ctx, obj)
 	if err != nil {
 		return httpx.LogicError(err)
 	}
@@ -47,10 +48,10 @@ func (h *handler) createObject(c echo.Context) error {
 	return c.JSON(http.StatusCreated, echo.Map{"id": id})
 }
 
-func (h *handler) uploadContent(c echo.Context) error {
+func (h *handler) addFile(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	id, err := strconv.Atoi(c.Param("id"))
+	infoObjectID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return httpx.ParameterError("id", err)
 	}
@@ -70,8 +71,29 @@ func (h *handler) uploadContent(c echo.Context) error {
 		}
 	}()
 
-	err = h.manager.UploadContent(ctx, id, file, fileHeader.Size)
+	fileMeta := dto.File{
+		Name:        fileHeader.Filename,
+		ContentType: fileHeader.Header.Get("Content-Type"),
+		Size:        fileHeader.Size,
+	}
+
+	fileID, err := h.manager.AddFile(ctx, infoObjectID, fileMeta, file)
 	if err != nil {
+		return httpx.LogicError(err)
+	}
+
+	return c.JSON(http.StatusCreated, echo.Map{"id": fileID})
+}
+
+func (h *handler) finilizeObject(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	infoObjectID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return httpx.ParameterError("id", err)
+	}
+
+	if err := h.manager.FinilizeInfoObject(ctx, infoObjectID); err != nil {
 		return httpx.LogicError(err)
 	}
 
@@ -86,14 +108,10 @@ func (h *handler) getObject(c echo.Context) error {
 		return httpx.ParameterError("id", err)
 	}
 
-	fo, err := h.manager.GetObject(ctx, id)
+	obj, err := h.manager.GetInfoObject(ctx, id)
 	if err != nil {
 		return httpx.LogicError(err)
 	}
 
-	return c.JSON(http.StatusOK, fo)
-}
-
-func (h *handler) getObjectMeta(c echo.Context) error {
-	return nil
+	return c.JSON(http.StatusOK, obj)
 }

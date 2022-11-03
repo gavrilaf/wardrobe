@@ -7,13 +7,13 @@ import (
 )
 
 const (
-	nodeIDBits   = 10
-	sequenceBits = 12
+	NodeIDBits   = 10
+	SequenceBits = 12
 
-	startEpoch = 1609459200000 // Custom Epoch 2021-01-01T00:00:00Z
+	StartEpoch = 1609459200000 // Custom Epoch 2021-01-01T00:00:00Z
 
-	maxNodeID   = (1 << nodeIDBits) - 1
-	maxSequence = (1 << sequenceBits) - 1
+	MaxNodeID   = (1 << NodeIDBits) - 1
+	MaxSequence = (1 << SequenceBits) - 1
 )
 
 var SnowflakeTime = time.Now
@@ -31,7 +31,6 @@ func NewSnowflake(nodeID int64) Snowflake {
 	return &snowflake{nodeID: nodeID, lock: sync.Mutex{}}
 }
 
-//
 type snowflake struct {
 	nodeID   int64
 	lastTm   int64
@@ -49,7 +48,7 @@ func (s *snowflake) NextID() (int64, error) {
 	s.lock.Lock()
 
 	if tm == s.lastTm {
-		s.sequence = (s.sequence + 1) & maxSequence
+		s.sequence = (s.sequence + 1) & MaxSequence
 		if s.sequence == 0 {
 			tm = s.waitNextMillis(tm)
 		}
@@ -60,7 +59,7 @@ func (s *snowflake) NextID() (int64, error) {
 	s.lastTm = tm
 	s.lock.Unlock()
 
-	return tm<<(nodeIDBits+sequenceBits) | (s.nodeID << sequenceBits) | s.sequence, nil
+	return tm<<(NodeIDBits+SequenceBits) | (s.nodeID << SequenceBits) | s.sequence, nil
 }
 
 // Block and wait till next millisecond
@@ -72,5 +71,5 @@ func (s *snowflake) waitNextMillis(tm int64) int64 {
 }
 
 func (s *snowflake) timestamp() int64 {
-	return SnowflakeTime().UnixMilli() - startEpoch
+	return SnowflakeTime().UnixMilli() - StartEpoch
 }

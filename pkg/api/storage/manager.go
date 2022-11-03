@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/gavrilaf/wardrobe/pkg/domain/stglogic"
+
 	"github.com/gavrilaf/wardrobe/pkg/domain/dto"
 	"github.com/gavrilaf/wardrobe/pkg/fs"
 	"github.com/gavrilaf/wardrobe/pkg/repo"
@@ -21,25 +23,28 @@ type Manager interface {
 }
 
 type Config struct {
-	Tx          repo.TxRunner
-	InfoObjects repo.InfoObjects
-	FS          fs.Storage
+	Tx              repo.TxRunner
+	InfoObjects     repo.InfoObjects
+	FS              fs.Storage
+	StgConfigurator stglogic.Configurator
 }
 
 func NewManager(cfg Config) Manager {
 	return &manager{
-		tx: cfg.Tx,
-		db: cfg.InfoObjects,
-		fs: cfg.FS,
+		tx:  cfg.Tx,
+		db:  cfg.InfoObjects,
+		fs:  cfg.FS,
+		cnf: cfg.StgConfigurator,
 	}
 }
 
 //
 
 type manager struct {
-	tx repo.TxRunner
-	db repo.InfoObjects
-	fs fs.Storage
+	tx  repo.TxRunner
+	db  repo.InfoObjects
+	fs  fs.Storage
+	cnf stglogic.Configurator
 }
 
 func (m *manager) CreateInfoObject(ctx context.Context, obj dto.InfoObject) (int, error) {

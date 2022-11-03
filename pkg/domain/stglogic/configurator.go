@@ -32,8 +32,7 @@ type configurator struct {
 }
 
 func (c *configurator) PrepareStorage(ctx context.Context) error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (c *configurator) GetBucket(obj dbtypes.InfoObject, file dbtypes.File) string {

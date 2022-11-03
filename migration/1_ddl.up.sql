@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS info_objects
     source          VARCHAR(512) NOT NULL,
     published       TIMESTAMPTZ NOT NULL,
     created         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    uploaded        TIMESTAMPTZ
+    finalized       TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS info_objects_name_index ON info_objects (name);
 CREATE INDEX IF NOT EXISTS info_objects_author_index ON info_objects (author);

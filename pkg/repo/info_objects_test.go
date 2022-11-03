@@ -60,7 +60,7 @@ func TestInfoObjects(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.NotZero(t, readObj.Created)
-		assert.Nil(t, readObj.Uploaded)
+		assert.Nil(t, readObj.Finalized)
 
 		expected := infoObject
 		expected.ID = infoObjectID
@@ -88,7 +88,7 @@ func TestInfoObjects(t *testing.T) {
 		t.Run("uploaded should not be empty", func(t *testing.T) {
 			readObj, err := infoObjects.GetById(ctx, infoObjectID)
 			assert.NoError(t, err)
-			assert.NotZero(t, readObj.Uploaded)
+			assert.NotZero(t, readObj.Finalized)
 		})
 	})
 

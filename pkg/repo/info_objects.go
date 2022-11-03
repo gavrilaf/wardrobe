@@ -34,7 +34,7 @@ func (db *DB) AddFile(ctx context.Context, file dbtypes.File) (int, error) {
 }
 
 func (db *DB) MarkUploaded(ctx context.Context, id int) error {
-	query := "UPDATE info_objects SET uploaded = CURRENT_TIMESTAMP WHERE id = $1"
+	query := "UPDATE info_objects SET finalized = CURRENT_TIMESTAMP WHERE id = $1"
 	_, err := db.Doer(ctx).Exec(ctx, query, id)
 	return err
 }

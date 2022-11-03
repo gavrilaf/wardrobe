@@ -91,7 +91,7 @@ func (m *manager) AddFile(ctx context.Context, infoObjID int, fileMeta dto.File,
 			return fmt.Errorf("failed to get info object from db %d, %w", infoObjID, err)
 		}
 
-		if obj.Uploaded != nil {
+		if obj.Finalized != nil {
 			return fmt.Errorf("info object %d finalized, failed to add file", infoObjID)
 		}
 

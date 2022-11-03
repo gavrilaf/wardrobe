@@ -9,5 +9,5 @@ type InfoObject struct {
 	Source    string     `db:"source"`
 	Published time.Time  `db:"published"`
 	Created   time.Time  `db:"created"`
-	Uploaded  *time.Time `db:"uploaded"`
+	Finalized *time.Time `db:"finalized"`
 }

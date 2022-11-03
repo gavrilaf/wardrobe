@@ -2,6 +2,7 @@ package dto
 
 import (
 	"fmt"
+
 	"github.com/gavrilaf/wardrobe/pkg/utils/timex"
 
 	"github.com/gavrilaf/wardrobe/pkg/repo/dbtypes"
@@ -14,7 +15,7 @@ type InfoObject struct {
 	Author    string   `json:"author"`
 	Published string   `json:"published"`
 	Created   string   `json:"created"`
-	Uploaded  string   `json:"uploaded"`
+	Finalized string   `json:"finalized"`
 	Files     []File   `json:"files"`
 	Tags      []string `json:"tags"`
 }
@@ -45,8 +46,8 @@ func InfoObjectFromDBType(o dbtypes.InfoObject) InfoObject {
 		Tags:      []string{},
 	}
 
-	if o.Uploaded != nil {
-		obj.Uploaded = timex.TimeToJsonString(*o.Uploaded)
+	if o.Finalized != nil {
+		obj.Finalized = timex.TimeToJsonString(*o.Finalized)
 	}
 
 	return obj

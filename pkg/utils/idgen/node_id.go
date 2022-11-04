@@ -15,8 +15,9 @@ func NodeID() (int64, error) {
 
 	var addr string
 	for _, i := range ifaces {
-		if i.Flags&net.FlagLoopback == 0 {
+		if i.Flags&net.FlagLoopback == 0 && i.Flags&net.FlagUp == 1 {
 			addr = i.HardwareAddr.String()
+			break
 		}
 	}
 

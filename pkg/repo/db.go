@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gavrilaf/wardrobe/pkg/utils/timex"
 	"os"
 	"path/filepath"
 	"time"
@@ -17,7 +18,6 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
-	"github.com/gavrilaf/wardrobe/pkg/utils"
 	"github.com/gavrilaf/wardrobe/pkg/utils/log"
 )
 
@@ -58,7 +58,7 @@ func NewDB(ctx context.Context, connString string, maxConn int32) (*DB, error) {
 
 	config.ConnConfig.Tracer = &tracelog.TraceLog{
 		Logger:   log.PgxLogAdapter{},
-		LogLevel: tracelog.LogLevelInfo,
+		LogLevel: tracelog.LogLevelWarn,
 	}
 
 	var pool *pgxpool.Pool
@@ -85,7 +85,7 @@ func NewDB(ctx context.Context, connString string, maxConn int32) (*DB, error) {
 	quit := make(chan struct{}, 1)
 
 	// log database statistic every 5 minutes
-	utils.FnTicker(logStatPeriod, quit, func() {
+	timex.FnTicker(logStatPeriod, quit, func() {
 		stat := pool.Stat()
 		log.FromContext(ctx).Infof("db stat(total=%d, acquired=%d, construction=%d, idle=%d)",
 			stat.TotalConns(), stat.AcquiredConns(), stat.ConstructingConns(), stat.IdleConns())
@@ -101,7 +101,7 @@ func (db *DB) Migrate(ctx context.Context, path string) error {
 	}
 
 	sourceURL := "file:///" + filepath.Join(dir, path)
-	log.FromContext(ctx).Infof("Looking for migration scripts in: %s\n", sourceURL)
+	log.FromContext(ctx).Infof("Looking for migration scripts in: %s", sourceURL)
 
 	connStr := db.pool.Config().ConnString()
 
@@ -128,30 +128,6 @@ func (db *DB) Close(ctx context.Context) {
 	db.pool.Close()
 	log.FromContext(ctx).Info("database closed")
 }
-
-/*func (db *DB) Migrate(ctx context.Context, path string) error {
-	dir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	logger := log.FromContext(ctx).With("mod", "DB migration")
-
-	sourceURL := "file:///" + filepath.Join(dir, path)
-	logger.Infof("Looking for migration scripts in: %s\n", sourceURL)
-
-	connStr := db.pool.Config().ConnString()
-
-	m, err := migrate.New(sourceURL, connStr)
-	if err != nil {
-		return err
-	}
-
-	if err = m.Up(); err != migrate.ErrNoChange {
-		return err
-	}
-	return nil
-}*/
 
 func IsNoRowsFound(err error) bool {
 	return err.Error() == pgx.ErrNoRows.Error()

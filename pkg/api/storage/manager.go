@@ -5,137 +5,185 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
-	"github.com/gavrilaf/wardrobe/pkg/api/dto"
+	"github.com/gavrilaf/wardrobe/pkg/domain/dto"
+	"github.com/gavrilaf/wardrobe/pkg/domain/stglogic"
 	"github.com/gavrilaf/wardrobe/pkg/fs"
 	"github.com/gavrilaf/wardrobe/pkg/repo"
 	"github.com/gavrilaf/wardrobe/pkg/utils/log"
 )
 
 type Manager interface {
-	CreateObject(ctx context.Context, fo dto.FO) (int, error)
-	UploadContent(ctx context.Context, id int, r io.Reader, size int64) error
+	CreateInfoObject(ctx context.Context, obj dto.InfoObject) (int, error)
+	FinalizeInfoObject(ctx context.Context, id int) error
+	GetInfoObject(ctx context.Context, id int) (dto.InfoObject, error)
 
-	GetObject(ctx context.Context, id int) (dto.FO, error)
+	AddFile(ctx context.Context, objID int, fileMeta dto.File, r io.Reader) (int, error)
+	GetFile(ctx context.Context, fileID int) (fs.File, error)
 }
 
 type Config struct {
-	Tx          repo.TxRunner
-	FileObjects repo.FileObjects
-	Tags        repo.Tags
-	Stg         fs.Storage
+	Tx              repo.TxRunner
+	InfoObjects     repo.InfoObjects
+	FS              fs.Storage
+	StgConfigurator stglogic.Configurator
 }
 
 func NewManager(cfg Config) Manager {
 	return &manager{
-		tx:          cfg.Tx,
-		fileObjects: cfg.FileObjects,
-		tags:        cfg.Tags,
-		stg:         cfg.Stg,
+		tx:  cfg.Tx,
+		db:  cfg.InfoObjects,
+		fs:  cfg.FS,
+		cnf: cfg.StgConfigurator,
 	}
 }
 
 //
 
 type manager struct {
-	tx          repo.TxRunner
-	fileObjects repo.FileObjects
-	tags        repo.Tags
-	stg         fs.Storage
+	tx  repo.TxRunner
+	db  repo.InfoObjects
+	fs  fs.Storage
+	cnf stglogic.Configurator
 }
 
-func (m *manager) CreateObject(ctx context.Context, fo dto.FO) (int, error) {
-	var (
-		fileObjectID int
-		err          error
-	)
+func (m *manager) CreateInfoObject(ctx context.Context, obj dto.InfoObject) (int, error) {
+	var objectID int
 
-	err = m.tx.RunWithTx(ctx, func(ctx context.Context) error {
-		foDb := fo.ToDBType()
-
-		foDb.FileName = makeFileName(fo)
-
-		foID, err := m.fileObjects.Create(ctx, foDb)
+	txErr := m.tx.RunWithTx(ctx, func(ctx context.Context) error {
+		dbObj, err := obj.ToDBType()
 		if err != nil {
-			return fmt.Errorf("failed to add file meta to the db (%s, %s), %w", fo.Name, fo.ContentType, err)
+			return fmt.Errorf("failed to create db info object, %w", err)
 		}
 
-		for _, tag := range fo.Tags {
-			tt := strings.ToLower(tag)
+		objectID, err = m.db.CreateInfoObject(ctx, dbObj)
+		if err != nil {
+			return fmt.Errorf("failed to create info object %v, %w", obj, err)
+		}
 
-			tagID, err := m.tags.GetOrCreateTag(ctx, tt)
+		for _, tag := range obj.Tags {
+			tagLower := strings.ToLower(tag)
+
+			err = m.db.LinkTag(ctx, objectID, tagLower)
 			if err != nil {
-				return fmt.Errorf("failed to get or create tag (%s, %s), %w", fo.Name, tt, err)
-			}
-
-			if err = m.tags.LinkTag(ctx, foID, tagID); err != nil {
-				return fmt.Errorf("failed to link tag %d to the file object %d, %w", tagID, foID, err)
+				return fmt.Errorf("failed to link tag %s to the info object %d, %w", tagLower, objectID, err)
 			}
 		}
 
-		fileObjectID = foID
 		return nil
 	})
 
-	if err != nil {
-		return 0, fmt.Errorf("failed to create file object, %w", err)
+	if txErr != nil {
+		return 0, txErr
 	}
 
-	log.FromContext(ctx).Infof("object created (%d, %s, %s)", fileObjectID, fo.Name, fo.ContentType)
+	log.FromContext(ctx).Infof("info object created (%d, %s)", objectID, obj.Name)
 
-	return fileObjectID, err
+	return objectID, nil
 }
 
-func (m *manager) UploadContent(ctx context.Context, id int, r io.Reader, size int64) error {
-	foDb, err := m.fileObjects.GetById(ctx, id)
-	if err != nil {
-		return fmt.Errorf("failed to retrieve file object from db %d, %w", id, err)
-	}
+func (m *manager) AddFile(ctx context.Context, objID int, fileMeta dto.File, r io.Reader) (int, error) {
+	var fileID int
 
-	err = m.tx.RunWithTx(ctx, func(ctx context.Context) error {
-
-		err = m.fileObjects.MarkAsUploaded(ctx, id, size)
+	txErr := m.tx.RunWithTx(ctx, func(ctx context.Context) error {
+		obj, err := m.db.GetById(ctx, objID)
 		if err != nil {
-			return fmt.Errorf("failed to mark object as uploaded %d, %w", id, err)
+			return fmt.Errorf("failed to get info object from db %d, %w", objID, err)
 		}
 
-		err = m.stg.CreateObject(ctx, fs.Object{
-			Name:        foDb.Name,
-			ContentType: foDb.ContentType,
-			Size:        size,
-			Reader:      r,
-		})
+		if obj.Finalized != nil {
+			return fmt.Errorf("info object %d finalized, failed to add file", objID)
+		}
+
+		dbFileMeta := fileMeta.ToDbType()
+
+		bucket := m.cnf.GetBucket(obj, dbFileMeta)
+		fileName, err := m.cnf.GenerateFileName(obj, dbFileMeta)
 		if err != nil {
-			return fmt.Errorf("failed to upload object to the storage (%d, %s), %w", id, foDb.Name, err)
+			return fmt.Errorf("failed to generate file name (%v, %v), %w", obj, dbFileMeta, err)
+		}
+
+		dbFileMeta.InfoObjectID = objID
+		dbFileMeta.Bucket = bucket
+		dbFileMeta.Name = fileName
+
+		fileID, err = m.db.AddFile(ctx, dbFileMeta)
+		if err != nil {
+			return fmt.Errorf("failed to add file meta %v, %w", dbFileMeta, err)
+		}
+
+		file := fs.File{
+			Bucket:      bucket,
+			Name:        fileName,
+			ContentType: fileMeta.ContentType,
+			Size:        fileMeta.Size,
+			Reader:      io.NopCloser(r),
+		}
+		err = m.fs.CreateFile(ctx, file)
+		if err != nil {
+			return fmt.Errorf("failed to upload file to the storage (%d, %v), %w", objID, fileMeta, err)
 		}
 
 		return nil
 	})
 
-	log.FromContext(ctx).Infof("object uploaded, (%d, %s, %s, %d)", id, foDb.Name, foDb.ContentType, size)
+	if txErr != nil {
+		return 0, txErr
+	}
+
+	log.FromContext(ctx).Infof("added file %d to the info object %d, (%s, %s, %d)", fileID, objID,
+		fileMeta.Name, fileMeta.ContentType, fileMeta.Size)
+
+	return fileID, nil
+}
+
+func (m *manager) FinalizeInfoObject(ctx context.Context, id int) error {
+	if err := m.db.MarkUploaded(ctx, id); err != nil {
+		return fmt.Errorf("failed to finalize info object %d", id)
+	}
+
+	log.FromContext(ctx).Infof("info object %d finalized", id)
 	return nil
 }
 
-func (m *manager) GetObject(ctx context.Context, id int) (dto.FO, error) {
-	foDb, err := m.fileObjects.GetById(ctx, id)
+func (m *manager) GetInfoObject(ctx context.Context, id int) (dto.InfoObject, error) {
+	dbObj, err := m.db.GetById(ctx, id)
 	if err != nil {
-		return dto.FO{}, fmt.Errorf("failed to retrieve file object from db %d, %w", id, err)
+		return dto.InfoObject{}, fmt.Errorf("failed to get info object  %d, %w", id, err)
 	}
 
-	tags, err := m.tags.GetFileObjectTags(ctx, id)
+	dbFiles, err := m.db.GetFiles(ctx, id)
 	if err != nil {
-		return dto.FO{}, fmt.Errorf("failed to retrieve file object tags from db %d, %w", id, err)
+		return dto.InfoObject{}, fmt.Errorf("failed to get info object files %d, %w", id, err)
 	}
 
-	fo := dto.MakeFOFromDBType(foDb)
-	fo.Tags = tags
+	tags, err := m.db.GetTags(ctx, id)
+	if err != nil {
+		return dto.InfoObject{}, fmt.Errorf("failed to get info object tags %d, %w", id, err)
+	}
 
-	return fo, nil
+	dtoFiles := make([]dto.File, 0, len(dbFiles))
+	for _, dbFile := range dbFiles {
+		dtoFiles = append(dtoFiles, dto.FileFromDBType(dbFile))
+	}
+
+	dtoObj := dto.InfoObjectFromDBType(dbObj)
+	dtoObj.Files = dtoFiles
+	dtoObj.Tags = tags
+
+	return dtoObj, nil
 }
 
-// move this logic
+func (m *manager) GetFile(ctx context.Context, fileID int) (fs.File, error) {
+	fileMeta, err := m.db.GetFile(ctx, fileID)
+	if err != nil {
+		return fs.File{}, fmt.Errorf("failed to read file %d meta, %w", fileID, err)
+	}
 
-func makeFileName(fo dto.FO) string {
-	return fmt.Sprintf("%s_%s_%d", fo.Source, fo.Name, time.Now().UnixMilli())
+	file, err := m.fs.GetFile(ctx, fileMeta.Bucket, fileMeta.Name)
+	if err != nil {
+		return fs.File{}, fmt.Errorf("failed to read file %v from storage, %w", fileMeta, err)
+	}
+
+	return file, err
 }

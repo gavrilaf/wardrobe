@@ -21,6 +21,8 @@ type InfoObjects interface {
 
 	GetFiles(ctx context.Context, id int) ([]dbtypes.File, error)
 	GetTags(ctx context.Context, id int) ([]string, error)
+
+	GetFile(ctx context.Context, fileID int) (dbtypes.File, error)
 }
 
 func (db *DB) CreateInfoObject(ctx context.Context, obj dbtypes.InfoObject) (int, error) {
@@ -81,6 +83,15 @@ func (db *DB) GetTags(ctx context.Context, id int) ([]string, error) {
 		"ORDER BY value"
 
 	return pgxutil.SelectColumn[string](ctx, db.Doer(ctx), query, id)
+}
+
+func (db *DB) GetFile(ctx context.Context, fileID int) (dbtypes.File, error) {
+	query := "SELECT * FROM files WHERE id = $1"
+
+	var file dbtypes.File
+	err := pgxutil.SelectStruct(ctx, db.Doer(ctx), &file, query, fileID)
+
+	return file, err
 }
 
 // private

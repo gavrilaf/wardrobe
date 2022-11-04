@@ -20,11 +20,11 @@ func Assemble(root *echo.Group, m Manager) {
 	g := root.Group("/info_objects")
 	{
 		g.GET("/:id", h.getObject)
-
 		g.POST("", h.createObject)
-		g.POST("/:id/files", h.addFile)
 		g.PUT("/:id/finalize", h.finalizeObject)
 
+		g.POST("/:id/files", h.addFile)
+		g.GET("/files/:file_id", h.getFile)
 	}
 }
 
@@ -114,4 +114,26 @@ func (h *handler) getObject(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, obj)
+}
+
+func (h *handler) getFile(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	fileID, err := strconv.Atoi(c.Param("file_id"))
+	if err != nil {
+		return httpx.ParameterError("id", err)
+	}
+
+	file, err := h.manager.GetFile(ctx, fileID)
+	if err != nil {
+		return httpx.LogicError(err)
+	}
+
+	defer func() {
+		if err := file.Reader.Close(); err != nil {
+			log.WithError(log.FromContext(ctx), err).Errorf("Failed to close stream for file %v", file)
+		}
+	}()
+
+	return c.Stream(http.StatusOK, file.ContentType, file.Reader)
 }

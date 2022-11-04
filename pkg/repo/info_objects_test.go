@@ -4,7 +4,6 @@ package repo_test
 
 import (
 	"context"
-	"github.com/gavrilaf/wardrobe/pkg/utils/timex"
 	"testing"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 
 	"github.com/gavrilaf/wardrobe/pkg/repo"
 	"github.com/gavrilaf/wardrobe/pkg/repo/dbtypes"
+	"github.com/gavrilaf/wardrobe/pkg/utils/timex"
 )
 
 func TestInfoObjects(t *testing.T) {
@@ -107,6 +107,12 @@ func TestInfoObjects(t *testing.T) {
 		expected[1].Uploaded = files[1].Uploaded
 
 		assert.Equal(t, expected, files)
+
+		t.Run("get single file", func(t *testing.T) {
+			ff, err := infoObjects.GetFile(ctx, files[0].ID)
+			assert.NoError(t, err)
+			assert.Equal(t, ff, files[0])
+		})
 	})
 
 	t.Run("link tags", func(t *testing.T) {

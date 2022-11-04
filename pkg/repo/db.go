@@ -58,7 +58,7 @@ func NewDB(ctx context.Context, connString string, maxConn int32) (*DB, error) {
 
 	config.ConnConfig.Tracer = &tracelog.TraceLog{
 		Logger:   log.PgxLogAdapter{},
-		LogLevel: tracelog.LogLevelInfo,
+		LogLevel: tracelog.LogLevelWarn,
 	}
 
 	var pool *pgxpool.Pool

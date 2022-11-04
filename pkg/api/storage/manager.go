@@ -6,9 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/gavrilaf/wardrobe/pkg/domain/stglogic"
-
 	"github.com/gavrilaf/wardrobe/pkg/domain/dto"
+	"github.com/gavrilaf/wardrobe/pkg/domain/stglogic"
 	"github.com/gavrilaf/wardrobe/pkg/fs"
 	"github.com/gavrilaf/wardrobe/pkg/repo"
 	"github.com/gavrilaf/wardrobe/pkg/utils/log"
@@ -16,10 +15,11 @@ import (
 
 type Manager interface {
 	CreateInfoObject(ctx context.Context, obj dto.InfoObject) (int, error)
-	AddFile(ctx context.Context, infoObjID int, fileMeta dto.File, r io.Reader) (int, error)
 	FinalizeInfoObject(ctx context.Context, id int) error
-
 	GetInfoObject(ctx context.Context, id int) (dto.InfoObject, error)
+
+	AddFile(ctx context.Context, objID int, fileMeta dto.File, r io.Reader) (int, error)
+	GetFile(ctx context.Context, fileID int) (fs.File, error)
 }
 
 type Config struct {
@@ -82,17 +82,17 @@ func (m *manager) CreateInfoObject(ctx context.Context, obj dto.InfoObject) (int
 	return objectID, nil
 }
 
-func (m *manager) AddFile(ctx context.Context, infoObjID int, fileMeta dto.File, r io.Reader) (int, error) {
+func (m *manager) AddFile(ctx context.Context, objID int, fileMeta dto.File, r io.Reader) (int, error) {
 	var fileID int
 
 	txErr := m.tx.RunWithTx(ctx, func(ctx context.Context) error {
-		obj, err := m.db.GetById(ctx, infoObjID)
+		obj, err := m.db.GetById(ctx, objID)
 		if err != nil {
-			return fmt.Errorf("failed to get info object from db %d, %w", infoObjID, err)
+			return fmt.Errorf("failed to get info object from db %d, %w", objID, err)
 		}
 
 		if obj.Finalized != nil {
-			return fmt.Errorf("info object %d finalized, failed to add file", infoObjID)
+			return fmt.Errorf("info object %d finalized, failed to add file", objID)
 		}
 
 		dbFileMeta := fileMeta.ToDbType()
@@ -103,7 +103,7 @@ func (m *manager) AddFile(ctx context.Context, infoObjID int, fileMeta dto.File,
 			return fmt.Errorf("failed to generate file name (%v, %v), %w", obj, dbFileMeta, err)
 		}
 
-		dbFileMeta.InfoObjectID = infoObjID
+		dbFileMeta.InfoObjectID = objID
 		dbFileMeta.Bucket = bucket
 		dbFileMeta.Name = fileName
 
@@ -121,7 +121,7 @@ func (m *manager) AddFile(ctx context.Context, infoObjID int, fileMeta dto.File,
 		}
 		err = m.fs.CreateFile(ctx, file)
 		if err != nil {
-			return fmt.Errorf("failed to upload file to the storage (%d, %v), %w", infoObjID, fileMeta, err)
+			return fmt.Errorf("failed to upload file to the storage (%d, %v), %w", objID, fileMeta, err)
 		}
 
 		return nil
@@ -131,7 +131,7 @@ func (m *manager) AddFile(ctx context.Context, infoObjID int, fileMeta dto.File,
 		return 0, txErr
 	}
 
-	log.FromContext(ctx).Infof("added file %d to the info object %d, (%s, %s, %d)", fileID, infoObjID,
+	log.FromContext(ctx).Infof("added file %d to the info object %d, (%s, %s, %d)", fileID, objID,
 		fileMeta.Name, fileMeta.ContentType, fileMeta.Size)
 
 	return fileID, nil
@@ -172,4 +172,18 @@ func (m *manager) GetInfoObject(ctx context.Context, id int) (dto.InfoObject, er
 	dtoObj.Tags = tags
 
 	return dtoObj, nil
+}
+
+func (m *manager) GetFile(ctx context.Context, fileID int) (fs.File, error) {
+	fileMeta, err := m.db.GetFile(ctx, fileID)
+	if err != nil {
+		return fs.File{}, fmt.Errorf("failed to read file %d meta, %w", fileID, err)
+	}
+
+	file, err := m.fs.GetFile(ctx, fileMeta.Bucket, fileMeta.Name)
+	if err != nil {
+		return fs.File{}, fmt.Errorf("failed to read file %v from storage, %w", fileMeta, err)
+	}
+
+	return file, err
 }

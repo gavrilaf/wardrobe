@@ -137,3 +137,14 @@ func (h *handler) getFile(c echo.Context) error {
 
 	return c.Stream(http.StatusOK, file.ContentType, file.Reader)
 }
+
+func (h *handler) getStat(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	stat, err := h.manager.GetStat(ctx)
+	if err != nil {
+		return httpx.LogicError(err)
+	}
+
+	return c.JSON(http.StatusOK, stat)
+}

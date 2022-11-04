@@ -23,6 +23,8 @@ type InfoObjects interface {
 	GetTags(ctx context.Context, id int) ([]string, error)
 
 	GetFile(ctx context.Context, fileID int) (dbtypes.File, error)
+
+	GetStat(ctx context.Context) (dbtypes.Stat, error)
 }
 
 func (db *DB) CreateInfoObject(ctx context.Context, obj dbtypes.InfoObject) (int, error) {
@@ -92,6 +94,31 @@ func (db *DB) GetFile(ctx context.Context, fileID int) (dbtypes.File, error) {
 	err := pgxutil.SelectStruct(ctx, db.Doer(ctx), &file, query, fileID)
 
 	return file, err
+}
+
+func (db *DB) GetStat(ctx context.Context) (dbtypes.Stat, error) {
+	doer := db.Doer(ctx)
+
+	totalObjects, err := pgxutil.SelectValue[int64](ctx, doer, "SELECT COUNT(*) FROM info_objects")
+	if err != nil {
+		return dbtypes.Stat{}, fmt.Errorf("failed to calculate objects quantity, %w", err)
+	}
+
+	totalFiles, err := pgxutil.SelectValue[int64](ctx, doer, "SELECT COUNT(*) FROM files")
+	if err != nil {
+		return dbtypes.Stat{}, fmt.Errorf("failed to calculate files quantity, %w", err)
+	}
+
+	totalSize, err := pgxutil.SelectValue[int64](ctx, doer, "SELECT SUM(size) FROM files")
+	if err != nil {
+		return dbtypes.Stat{}, fmt.Errorf("failed to calculate total files size, %w", err)
+	}
+
+	return dbtypes.Stat{
+		ObjectsCount: totalObjects,
+		FilesCount:   totalFiles,
+		TotalSize:    totalSize,
+	}, nil
 }
 
 // private

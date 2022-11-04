@@ -135,4 +135,17 @@ func TestInfoObjects(t *testing.T) {
 		expected := []string{tag1, tag2}
 		assert.Equal(t, expected, tags)
 	})
+
+	t.Run("stat", func(t *testing.T) {
+		stat, err := infoObjects.GetStat(ctx)
+		assert.NoError(t, err)
+
+		expected := dbtypes.Stat{
+			ObjectsCount: 1,
+			FilesCount:   2,
+			TotalSize:    1147,
+		}
+
+		assert.Equal(t, expected, stat)
+	})
 }

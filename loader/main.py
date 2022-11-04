@@ -2,7 +2,7 @@ import wikipediaapi
 import requests
 from datetime import datetime, timezone
 
-base_url = "http://192.168.31.65:8443/api/v1/info_objects"
+base_url = "http://192.168.31.64:8081/api/v1/info_objects"
 
 
 def check_resp(resp):
@@ -65,7 +65,7 @@ class Loader:
             if page_name in self.visited:
                 return
 
-            if self.loaded_count > 100:
+            if self.loaded_count > 100000:
                 return
 
             page = self.wiki.page(page_name)
@@ -83,6 +83,6 @@ class Loader:
 
 if __name__ == '__main__':
     loader = Loader()
-    loader.start('Python_(programming_language)')
+    loader.start('Coronavirus')
 
 

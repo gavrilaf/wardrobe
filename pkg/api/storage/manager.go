@@ -20,6 +20,8 @@ type Manager interface {
 
 	AddFile(ctx context.Context, objID int, fileMeta dto.File, r io.Reader) (int, error)
 	GetFile(ctx context.Context, fileID int) (fs.File, error)
+
+	GetStat(ctx context.Context) (dto.Stat, error)
 }
 
 type Config struct {
@@ -186,4 +188,13 @@ func (m *manager) GetFile(ctx context.Context, fileID int) (fs.File, error) {
 	}
 
 	return file, err
+}
+
+func (m *manager) GetStat(ctx context.Context) (dto.Stat, error) {
+	dbStat, err := m.db.GetStat(ctx)
+	if err != nil {
+		return dto.Stat{}, fmt.Errorf("failed to calculate storage stat, %w", err)
+	}
+
+	return dto.StatFromDDType(dbStat), err
 }

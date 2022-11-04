@@ -2,7 +2,7 @@ import wikipediaapi
 import requests
 from datetime import datetime, timezone
 
-base_url = "http://127.0.0.1:8443/api/v1/info_objects"
+base_url = "http://192.168.31.65:8443/api/v1/info_objects"
 
 
 def check_resp(resp):

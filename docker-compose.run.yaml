@@ -15,6 +15,5 @@ services:
       PORT: ":8443"
       POSTGRES_CONNSTR: "postgres://wardrobe:wardrobe@host.docker.internal:5432/wardrobe?sslmode=disable"
       MINIO_USER: minio-wardrobe
-      MINIO_PASSWORD: minio-wardrobe-psw
-      MINIO_ENDPOINT: "172.17.0.1:9000"
-      FO_BUCKET: "fo-bucket"
+      MINIO_PASSWORD: wardrobe-psw
+      MINIO_ENDPOINT: "host.docker.internal:9000"

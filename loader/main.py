@@ -1,11 +1,8 @@
 import wikipediaapi
 import requests
+from datetime import datetime, timezone
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-base_url = "http://127.0.0.1:8443/api/v1/fo"
+base_url = "http://127.0.0.1:8443/api/v1/info_objects"
 
 
 def check_resp(resp):
@@ -14,23 +11,28 @@ def check_resp(resp):
         raise Exception()
 
 
-def upload(title, text, tags):
-    json = {"name": title, "content_type": "text/plain", "author": "test", "source": "wiki", "tags": tags}
+def upload(page):
+    categories = list(page.categories.keys())
+    tags = list(filter(valid_tag, map(lambda s: s[9:], categories)))
+
+    published = datetime.now(timezone.utc).isoformat()
+
+    json = {"name": page.title, "published": published, "author": "test", "source": "wiki", "tags": tags}
     resp = requests.post(base_url, json)
 
     check_resp(resp)
 
     resp_json = resp.json()
-    fo_id = resp_json["id"]
+    obj_id = resp_json["id"]
 
-    upload_url = "{}/{}".format(base_url, fo_id)
-    files = {'file': ('file', text, "text/plain")}
+    upload_url = "{}/{}/files".format(base_url, obj_id)
 
-    resp = requests.put(upload_url, files=files)
+    files = {'file': ('content.txt', page.text, "text/plain")}
+    resp = requests.post(upload_url, files=files)
 
     check_resp(resp)
 
-    print("file object {} {} created and uploaded".format(title, fo_id))
+    print("info object {} {} created and uploaded".format(page.title, obj_id))
     print(tags)
 
 
@@ -67,11 +69,10 @@ class Loader:
                 return
 
             page = self.wiki.page(page_name)
+            if not page.exists():
+                continue
 
-            categories = list(page.categories.keys())
-            tags = list(filter(valid_tag, map(lambda s: s[9:], categories)))
-
-            upload(page.title, page.text, tags)
+            upload(page)
 
             self.visited.add(page.title)
             self.loaded_count += 1
